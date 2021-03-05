@@ -25,11 +25,23 @@ class Data(db.Model):
         self.email = email
         self.phone = phone
 
+class DataA(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    Username = db.Column(db.String(100))
+
+    def __init__(self, Username):
+
+        self.Username = Username
+
 #This is the index route where we are going to
 #query on all our employee data
 @app.route('/')
 def Index():
-    all_data = Data.query.all()
+    all_data = (
+        db.session.query(Data.id, Data.name, Data.email, Data.phone, DataA.Username)
+        .filter(Data.id == DataA.id)
+        .all()
+    )
     return render_template("index.html", employees = all_data)
 
 #this route is for inserting data to mysql database via html forms
@@ -41,9 +53,12 @@ def insert():
         name = request.form['name']
         email = request.form['email']
         phone = request.form['phone']
+        Username = request.form['Username']
 
         my_data = Data(name, email, phone)
+        my_data1 = DataA(Username)
         db.session.add(my_data)
+        db.session.add(my_data1)
         db.session.commit()
 
         flash("Employee Inserted Successfully")
@@ -69,6 +84,8 @@ def update():
 @app.route('/delete/<id>/', methods = ['GET', 'POST'])
 def delete(id):
     my_data = Data.query.get(id)
+    my_dataA = DataA.query.get(id)
+    db.session.delete(my_dataA)
     db.session.delete(my_data)
     db.session.commit()
     flash("Employee Deleted Successfully")
